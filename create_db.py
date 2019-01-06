@@ -41,15 +41,16 @@ def insert_student(student_type, sum_of_all):
 def insert_course(course_id, course_name, student_type, course_capacity, classroom, iterations):
     return None
 
-def insert_object(object):
-    first_letter = object[0]
-    object = object.remove(first_letter)
+
+def insert_object(row_object):
+    first_letter = row_object[0]
+    row_object = row_object.remove(first_letter)
     if first_letter == 'C':
-        insert_course(*object)
+        insert_course(*row_object)
     if first_letter == "S":
-        insert_student(*object)
+        insert_student(*row_object)
     if first_letter == "R":
-        insert_classroom(*object)
+        insert_classroom(*row_object)
 
 
 if not os.path.isfile("classes.db"):
