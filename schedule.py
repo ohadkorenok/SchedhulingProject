@@ -134,7 +134,7 @@ if os.path.isfile(DB_NAME):
                     course_id = course[0]
                     students_of_course = course[2]
                     number_of_students = course[3]
-                    course_length = course[4]
+                    course_length = course[5]
                     # update classroom
                     update_classroom_by_course(course_id, course_length, classroom[0])
                     # update students
