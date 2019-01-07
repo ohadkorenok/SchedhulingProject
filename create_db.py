@@ -31,15 +31,16 @@ def create_tables():
 
 
 def insert_classroom(room_id, location):
-    return None
+    cursor.execute("INSERT INTO classrooms VALUES(?,?, ?, ? )", (int(room_id), location, 0, 0))
 
 
 def insert_student(student_type, sum_of_all):
-    return None
+    cursor.execute("INSERT INTO students VALUES(?,?)", (student_type, int(sum_of_all)))
 
 
-def insert_course(course_id, course_name, student_type, course_capacity, classroom, iterations):
-    return None
+def insert_course(course_id, course_name, student_type, course_capacity, class_id, iterations):
+    cursor.execute("INSERT INTO courses VALUES(?,?,?,?,?,?)",
+                   (int(course_id), course_name, student_type, course_capacity, class_id, iterations))
 
 
 def insert_object(row_object):
@@ -55,8 +56,9 @@ def insert_object(row_object):
 
 if not os.path.isfile("classes.db"):
     conn = sqlite3.connect("classes.db")
+    cursor = conn.cursor()
     create_tables()
 
 with open(sys.argv[1], "rb") as file:
     line = file.readline()
-    insert_object(line.split(','))
+    insert_object(*line.split(','))
