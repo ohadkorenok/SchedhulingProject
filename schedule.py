@@ -43,16 +43,6 @@ def coursesIsEmpty(cursor):
     return False
 
 
-def increase_students_occupied_by_deleted_course(count, grade):
-    sql = """
-    UPDATE students 
-    SET  count = count + ? WHERE grade = ?
-    """
-    val = (count, grade)
-    cursor.execute(sql, val)
-    conn.commit()
-
-
 def update_classroom_decrease_time(cr_id):
     sql = """
     UPDATE classrooms 
@@ -63,6 +53,15 @@ def update_classroom_decrease_time(cr_id):
     cursor.execute(sql, val)
     conn.commit()
 
+def update_classroom_after_removing_course(cr_id):
+    sql = """
+    UPDATE classrooms 
+    SET  current_course_id = 0
+    WHERE id = ?
+    """
+    val = (cr_id,)
+    cursor.execute(sql, val)
+    conn.commit()
 
 def update_course_after_assignment(c_id, cr_id):
     sql = """
@@ -105,6 +104,22 @@ def get_classroom_and_course_data(cr_id):
             cr_id,))
     return cursor.fetchone()
 
+def assign_classroom(u_classroom):
+    cursor.execute("SELECT * FROM courses WHERE class_id = ? ", (u_classroom[0],))
+    course = cursor.fetchone()
+    if course is not None:
+        course_id = course[0]
+        students_of_course = course[2]
+        number_of_students = course[3]
+        course_length = course[5]
+        # update classroom
+        update_classroom_by_course(course_id, course_length, u_classroom[0])
+        # update students
+        update_student_by_course(number_of_students, students_of_course)
+        # update course
+        update_course_after_assignment(course_id, u_classroom[0])
+        print("(" + str(iteration_id) + ") " + format_this_tuple(
+            get_classroom_and_course_data(u_classroom[0])) + " is schedule to start")
 
 def update_classroom_by_course(c_id, c_length, cr_id):
     sql = """
@@ -124,33 +139,26 @@ if os.path.isfile(DB_NAME):
         cursor.execute("SELECT * FROM classrooms")
         classrooms = cursor.fetchall()
         for classroom in classrooms:
-            if classroom[3] == 0:  # Check if the room is ready for new course
-                if classroom[2] != 0:  # check if there is a course_id
-                    # update students with the course amount (that has finished, and delete the course).
-                    cursor.execute("SELECT student, number_of_students FROM courses WHERE id = ?", (classroom[2],))
-                    students = cursor.fetchone()
-                    increase_students_occupied_by_deleted_course(students[1], students[0])
-                    print("(" + str(iteration_id) + ")" + format_this_tuple(get_classroom_and_course_data(classroom[0])) + " is done")
-                    delete_course_by_id(classroom[2])
-                # Assignment: Fetch one course
-                cursor.execute("SELECT * FROM courses WHERE class_id = ? ", (classroom[0],))
-                course = cursor.fetchone()
-                if course is not None:
-                    course_id = course[0]
-                    students_of_course = course[2]
-                    number_of_students = course[3]
-                    course_length = course[5]
-                    # update classroom
-                    update_classroom_by_course(course_id, course_length, classroom[0])
-                    # update students
-                    update_student_by_course(number_of_students, students_of_course)
-                    # update course
-                    update_course_after_assignment(course_id, classroom[0])
-                    print("(" + str(iteration_id) + ")" + format_this_tuple(get_classroom_and_course_data(classroom[0])) + " is schedule to start")
-            else:
+            if classroom[3] > 0:
                 update_classroom_decrease_time(classroom[0])
-                data = get_classroom_and_course_data(classroom[0])
-                print ("(" + str(iteration_id) + ") " + data[1] + ": occupied by "+data[0])
-        iteration_id += 1
+                updated_class_room = cursor.execute("SELECT * FROM classrooms WHERE id = ? ", (classroom[0],)).fetchone()
+                if updated_class_room[3] == 0:  # Check if the room is ready for new course
+                    if updated_class_room[2] != 0:  # check if there is a course_id
+                        # update students with the course amount (that has finished, and delete the course).
+                        print("(" + str(iteration_id) + ") " + format_this_tuple(
+                            get_classroom_and_course_data(updated_class_room[0])) + " is done")
+                        delete_course_by_id(updated_class_room[2])
+                        update_classroom_after_removing_course(updated_class_room[0])
+                    # Assignment: Fetch one course
+                        assign_classroom(updated_class_room)
+                # data = get_classroom_and_course_data(classroom[0])
+                # if classroom[3] != 1:
+                #     print ("(" + str(iteration_id) + ") " + data[1] + ": occupied by "+data[0])
+                else:
+                    data = get_classroom_and_course_data(updated_class_room[0])
+                    print("(" + str(iteration_id) + ") " + data[1] + ": occupied by " + data[0])
+            else:
+                assign_classroom(classroom)
         print_all_tables()
+        iteration_id += 1
 os.remove(DB_NAME)

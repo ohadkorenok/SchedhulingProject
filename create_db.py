@@ -99,8 +99,9 @@ if not os.path.isfile(DB_NAME):
     with open(sys.argv[1], "r") as file:
         line = file.readline()
         while line != '':
-            line = line[:-1]
-            lineList = line.split(',')
+            if line[-1] == '\n':
+                line = line[:-1]
+            lineList = line.split(', ')
             insert_object(conn, lineList)
             line = file.readline()
     print_all_tables()
