@@ -2,8 +2,8 @@ import os
 import sqlite3
 import atexit
 import sys
-from schedule import *
 
+DB_NAME = "schedule.db"
 
 def create_tables(conn):
     conn.executescript("""
@@ -93,8 +93,8 @@ def insert_object(conn, row_object):
         insert_classroom(conn, *row_object)
 
 
-if not os.path.isfile("classes.db"):
-    conn = sqlite3.connect("classes.db")
+if not os.path.isfile(DB_NAME):
+    conn = sqlite3.connect(DB_NAME)
     create_tables(conn)
     with open(sys.argv[1], "r") as file:
         line = file.readline()
@@ -104,4 +104,4 @@ if not os.path.isfile("classes.db"):
             insert_object(conn, lineList)
             line = file.readline()
     print_all_tables()
-    adva()
+
