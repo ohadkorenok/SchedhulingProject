@@ -4,6 +4,7 @@ from create_db import *
 
 DB_NAME = "schedule.db"
 
+
 def print_courses():
     print("courses")
     cursor = conn.cursor()
@@ -93,6 +94,10 @@ def delete_course_by_id(c_id):
     conn.commit()
 
 
+def format_this_tuple(tuple_object):
+    return tuple_object[1] + ": " + tuple_object[0]
+
+
 def get_classroom_and_course_data(cr_id):
     cursor.execute(
         "SELECT courses.course_name, classrooms.location FROM classrooms INNER JOIN courses ON courses.class_id = classrooms.id WHERE classrooms.id = ?",
@@ -125,7 +130,7 @@ if os.path.isfile(DB_NAME):
                     cursor.execute("SELECT student, number_of_students FROM courses WHERE id = ?", (classroom[2],))
                     students = cursor.fetchone()
                     increase_students_occupied_by_deleted_course(students[1], students[0])
-                    print("(" + str(iteration_id) + ")" + str(get_classroom_and_course_data(classroom[0])) + " is done")
+                    print("(" + str(iteration_id) + ")" + format_this_tuple(get_classroom_and_course_data(classroom[0])) + " is done")
                     delete_course_by_id(classroom[2])
                 # Assignment: Fetch one course
                 cursor.execute("SELECT * FROM courses WHERE class_id = ? ", (classroom[0],))
@@ -141,10 +146,11 @@ if os.path.isfile(DB_NAME):
                     update_student_by_course(number_of_students, students_of_course)
                     # update course
                     update_course_after_assignment(course_id, classroom[0])
-                    print("(" + str(iteration_id) + ")" + str(
-                        get_classroom_and_course_data(classroom[0])) + " is schedule to start")
+                    print("(" + str(iteration_id) + ")" + format_this_tuple(get_classroom_and_course_data(classroom[0])) + " is schedule to start")
             else:
                 update_classroom_decrease_time(classroom[0])
-                nitzan = get_classroom_and_course_data(classroom[0])
+                data = get_classroom_and_course_data(classroom[0])
+                print ("(" + str(iteration_id) + ") " + data[1] + ": occupied by "+data[0])
         iteration_id += 1
         print_all_tables()
+os.remove(DB_NAME)
