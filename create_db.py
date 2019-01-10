@@ -5,6 +5,7 @@ import sys
 
 DB_NAME = "schedule.db"
 
+
 def create_tables(conn):
     conn.executescript("""
     
@@ -105,4 +106,3 @@ if not os.path.isfile(DB_NAME):
             insert_object(conn, lineList)
             line = file.readline()
     print_all_tables()
-

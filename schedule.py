@@ -53,6 +53,7 @@ def update_classroom_decrease_time(cr_id):
     cursor.execute(sql, val)
     conn.commit()
 
+
 def update_classroom_after_removing_course(cr_id):
     sql = """
     UPDATE classrooms 
@@ -62,6 +63,7 @@ def update_classroom_after_removing_course(cr_id):
     val = (cr_id,)
     cursor.execute(sql, val)
     conn.commit()
+
 
 def update_course_after_assignment(c_id, cr_id):
     sql = """
@@ -104,6 +106,7 @@ def get_classroom_and_course_data(cr_id):
             cr_id,))
     return cursor.fetchone()
 
+
 def assign_classroom(u_classroom):
     cursor.execute("SELECT * FROM courses WHERE class_id = ? ", (u_classroom[0],))
     course = cursor.fetchone()
@@ -121,6 +124,7 @@ def assign_classroom(u_classroom):
         print("(" + str(iteration_id) + ") " + format_this_tuple(
             get_classroom_and_course_data(u_classroom[0])) + " is schedule to start")
 
+
 def update_classroom_by_course(c_id, c_length, cr_id):
     sql = """
     UPDATE classrooms 
@@ -135,13 +139,16 @@ if os.path.isfile(DB_NAME):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     iteration_id = 0
+    if coursesIsEmpty(cursor):
+        print_all_tables()
     while not coursesIsEmpty(cursor):
         cursor.execute("SELECT * FROM classrooms")
         classrooms = cursor.fetchall()
         for classroom in classrooms:
             if classroom[3] > 0:
                 update_classroom_decrease_time(classroom[0])
-                updated_class_room = cursor.execute("SELECT * FROM classrooms WHERE id = ? ", (classroom[0],)).fetchone()
+                updated_class_room = cursor.execute("SELECT * FROM classrooms WHERE id = ? ",
+                                                    (classroom[0],)).fetchone()
                 if updated_class_room[3] == 0:  # Check if the room is ready for new course
                     if updated_class_room[2] != 0:  # check if there is a course_id
                         # update students with the course amount (that has finished, and delete the course).
@@ -149,11 +156,8 @@ if os.path.isfile(DB_NAME):
                             get_classroom_and_course_data(updated_class_room[0])) + " is done")
                         delete_course_by_id(updated_class_room[2])
                         update_classroom_after_removing_course(updated_class_room[0])
-                    # Assignment: Fetch one course
+                        # Assignment: Fetch one course
                         assign_classroom(updated_class_room)
-                # data = get_classroom_and_course_data(classroom[0])
-                # if classroom[3] != 1:
-                #     print ("(" + str(iteration_id) + ") " + data[1] + ": occupied by "+data[0])
                 else:
                     data = get_classroom_and_course_data(updated_class_room[0])
                     print("(" + str(iteration_id) + ") " + data[1] + ": occupied by " + data[0])
@@ -161,4 +165,3 @@ if os.path.isfile(DB_NAME):
                 assign_classroom(classroom)
         print_all_tables()
         iteration_id += 1
-os.remove(DB_NAME)
